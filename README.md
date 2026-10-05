@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PulseCRM (Next.js + Supabase)
 
-## Getting Started
+A multi-tenant CRM demo: auth, workspaces with roles and invites, clients, drag-and-drop pipeline,
+dashboard, activity timeline, Stripe test-mode billing, and a one-click demo login.
 
-First, run the development server:
+**Stack:** Next.js 16 (App Router, Server Actions, `proxy.ts`), Supabase (Postgres + RLS + Auth),
+Tailwind 4, dnd-kit, Recharts, Stripe (test mode), zod.
+
+## Setup
+
+1. Create a free project at <https://supabase.com>.
+2. In **SQL Editor**, run [`supabase/schema.sql`](supabase/schema.sql).
+3. In **Authentication → Providers → Email**, turn off "Confirm email" for the demo (so signup logs in immediately).
+4. Copy `.env.example` to `.env.local` and fill in the Supabase URL, anon key and service-role key
+   (Project Settings → API). Pick a `DEMO_PASSWORD`.
+5. Install, seed and run:
 
 ```bash
+npm install
+npm run seed   # creates demo@pulsecrm.dev with 40 clients; re-run any time to reset
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open <http://localhost:3000> and click **Try the demo**.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Upgrading an existing database? Run the files in `supabase/migrations/` in order (001 card order, 002 profile email + accent colour).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Stripe (optional)
 
-## Learn More
+Create a test-mode product with a recurring price, set `STRIPE_SECRET_KEY` and `STRIPE_PRO_PRICE_ID`, then:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+stripe listen --forward-to localhost:3000/api/stripe/webhook   # prints STRIPE_WEBHOOK_SECRET
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Pay with card `4242 4242 4242 4242`. The webhook flips the workspace to Pro (unlimited clients).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## How tenancy works
 
-## Deploy on Vercel
+Every row carries a `workspace_id`. Row-level security policies (see `schema.sql`) restrict reads and
+writes to workspace members, deletes to owners/admins, and a database trigger enforces the Free plan's
+25-client limit, so the rules hold even if the UI is bypassed. The service-role key is only used server-side
+(seed script, Stripe actions and webhook).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Demo notes
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The demo account is shared by everyone who clicks "Try the demo". Re-run `npm run seed` before a client call
+to reset it.

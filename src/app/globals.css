@@ -1,26 +1,91 @@
 @import "tailwindcss";
 
+/* Dark mode is class-based so the theme toggle can override the system setting. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Workspace accent colour: one base colour, every shade derived from it. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --brand: #4f46e5;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --color-brand-50: color-mix(in oklab, var(--brand) 8%, white);
+  --color-brand-100: color-mix(in oklab, var(--brand) 16%, white);
+  --color-brand-200: color-mix(in oklab, var(--brand) 30%, white);
+  --color-brand-300: color-mix(in oklab, var(--brand) 50%, white);
+  --color-brand-400: color-mix(in oklab, var(--brand) 75%, white);
+  --color-brand-500: color-mix(in oklab, var(--brand) 90%, white);
+  --color-brand-600: var(--brand);
+  --color-brand-700: color-mix(in oklab, var(--brand) 85%, black);
+  --color-brand-800: color-mix(in oklab, var(--brand) 70%, black);
+  --color-brand-900: color-mix(in oklab, var(--brand) 55%, black);
+  --color-brand-950: color-mix(in oklab, var(--brand) 30%, black);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+html {
+  color-scheme: light;
+}
+html.dark {
+  color-scheme: dark;
+}
+
+/* Skeleton shimmer used by loading.tsx files. */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  border-radius: 0.5rem;
+  background: linear-gradient(90deg, rgb(148 163 184 / 0.15) 25%, rgb(148 163 184 / 0.3) 50%, rgb(148 163 184 / 0.15) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Landing-page motion. All of it is disabled for people who prefer reduced motion. */
+.reveal {
+  transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.2, 0, 0, 1);
+}
+.reveal.reveal-hidden {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.float-slow { animation: float 6s ease-in-out infinite; }
+.float-slower { animation: float 7.5s ease-in-out infinite 1s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .reveal.reveal-hidden {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .float-slow, .float-slower, .skeleton {
+    animation: none;
+  }
+}
+
+/* Chart tooltip colours (Recharts renders inline styles, so they read these variables). */
+:root {
+  --chart-tip-bg: #ffffff;
+  --chart-tip-fg: #0f172a;
+  --chart-tip-border: #e2e8f0;
+}
+html.dark {
+  --chart-tip-bg: #0f172a;
+  --chart-tip-fg: #e2e8f0;
+  --chart-tip-border: #334155;
 }
